@@ -63,7 +63,7 @@ no.onclick = () => { if (dodges >= 7) send(false); };
 
 // MUSIC: a built-in instrumental loop (made in code, no copyright). To use your own track instead,
 // add the file next to index.html and set MUSIC_FILE = "music.mp3".
-const MUSIC_FILE = "";
+const MUSIC_FILE = "music.mp3";
 const mu = $("#mu"); let want = true, AC, master, au;
 const playing = () => au ? !au.paused : !!AC && AC.state === "running";
 function ui() { const on = playing(); mu.classList.toggle("on", on); mu.classList.toggle("wait", want && !on); mu.setAttribute("aria-pressed", on); }
