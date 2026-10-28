@@ -64,7 +64,7 @@ no.onclick = () => { if (dodges >= 7) send(false); };
 // MUSIC: starts on by default. Browsers refuse to play SOUND before the first tap/click, so the track
 // starts silently and switches to full sound on the visitor's first tap anywhere. Mute button = bottom-left.
 // Built-in loop is used if MUSIC_FILE is empty; otherwise your own file plays.
-const MUSIC_FILE = "music.mp3";
+const MUSIC_FILE = "happy_diwali.mp3";
 const mu = $("#mu"); let want = true, AC, master, au;
 const audible = () => au ? !au.paused && !au.muted : !!AC && AC.state === "running";
 function ui() { mu.classList.toggle("on", want); mu.classList.toggle("wait", want && !audible()); mu.setAttribute("aria-pressed", want); }
