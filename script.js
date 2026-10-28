@@ -61,12 +61,13 @@ function send(yes) {
 $("#f").onsubmit = e => { e.preventDefault(); send(true); };
 no.onclick = () => { if (dodges >= 7) send(false); };
 
-// MUSIC: a built-in instrumental loop (made in code, no copyright). To use your own track instead,
-// add the file next to index.html and set MUSIC_FILE = "music.mp3".
+// MUSIC: starts on by default. Browsers refuse to play SOUND before the first tap/click, so the track
+// starts silently and switches to full sound on the visitor's first tap anywhere. Mute button = bottom-left.
+// Built-in loop is used if MUSIC_FILE is empty; otherwise your own file plays.
 const MUSIC_FILE = "music.mp3";
 const mu = $("#mu"); let want = true, AC, master, au;
-const playing = () => au ? !au.paused : !!AC && AC.state === "running";
-function ui() { const on = playing(); mu.classList.toggle("on", on); mu.classList.toggle("wait", want && !on); mu.setAttribute("aria-pressed", on); }
+const audible = () => au ? !au.paused && !au.muted : !!AC && AC.state === "running";
+function ui() { mu.classList.toggle("on", want); mu.classList.toggle("wait", want && !audible()); mu.setAttribute("aria-pressed", want); }
 function synth() {
   const spb = 60 / 104 / 2, D = 293.66, mel = [7,-1,8,7,5,-1,4,1, 0,-1,1,4,1,0,-1,-1, 4,-1,5,7,8,-1,11,12, 11,8,7,5,4,1,0,-1];
   const nb = AC.createBuffer(1, AC.sampleRate, AC.sampleRate), d = nb.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
@@ -89,15 +90,21 @@ function synth() {
     n++; next += spb;
   } }, 40);
 }
-function play() {
-  if (!au && !AC) {
-    if (MUSIC_FILE) { au = new Audio(MUSIC_FILE); au.loop = true; au.volume = .6; au.onplay = au.onpause = ui; }
-    else { AC = new (window.AudioContext || window.webkitAudioContext)(); master = AC.createGain(); master.gain.value = .5; master.connect(AC.destination); AC.onstatechange = ui; synth(); }
+function begin() {
+  if (MUSIC_FILE) {
+    au = new Audio(MUSIC_FILE); au.loop = true; au.volume = .6; au.onplay = au.onpause = au.onvolumechange = ui;
+    au.play().then(ui).catch(() => { au.muted = true; au.play().then(ui).catch(ui); });
+  } else {
+    AC = new (window.AudioContext || window.webkitAudioContext)(); master = AC.createGain(); master.gain.value = .5; master.connect(AC.destination); AC.onstatechange = ui; synth(); AC.resume().then(ui).catch(ui);
   }
-  Promise.resolve(au ? au.play() : AC.resume()).then(ui).catch(ui);
 }
-function halt() { if (au) au.pause(); else if (AC) AC.suspend(); ui(); }
-mu.onclick = () => { if (playing()) { want = false; halt(); } else { want = true; play(); } };
-["pointerdown", "keydown", "touchend"].forEach(ev => addEventListener(ev, e => { if (want && !playing() && !(e.target.closest && e.target.closest("#mu"))) play(); }, { passive: true }));
-document.addEventListener("visibilitychange", () => { if (document.hidden) { if (playing()) halt(); } else if (want) play(); });
-ui(); play();
+function unlock() { if (!want || audible()) return; if (au) { au.muted = false; au.play().then(ui).catch(ui); } else AC.resume().then(ui).catch(ui); }
+mu.onclick = () => {
+  if (want && !audible()) return unlock();
+  want = !want;
+  if (au) { au.muted = !want; if (want) au.play().catch(() => {}); } else if (want) AC.resume(); else AC.suspend();
+  ui();
+};
+["pointerdown", "pointerup", "touchend", "click", "keydown"].forEach(ev => addEventListener(ev, e => { if (!(e.target.closest && e.target.closest("#mu"))) unlock(); }, { passive: true }));
+document.addEventListener("visibilitychange", () => { if (document.hidden) { if (au) au.pause(); else if (AC) AC.suspend(); } else if (want) { if (au) au.play().catch(() => {}); else if (AC) AC.resume(); } ui(); });
+begin(); ui();
