@@ -1,0 +1,103 @@
+// RSVPs go straight into your Google Form (and its linked Sheet).
+// Fill in the two ENTRY ids (see README.md). Until then the button just opens the form.
+const FORM_LINK = "https://forms.gle/Ydo7jZvvtRGdJQCU7";
+const FORM_ACTION = "https://docs.google.com/forms/d/e/1FAIpQLSe8odf2Fxi2M-bJRn7D1As1ssJlsiF5_yOd1crU9hp3r2euQw/formResponse";
+const ENTRY_NAME = "entry.1385258830";   // e.g. "entry.123456789"
+const ENTRY_COMING = "entry.600582352"; // e.g. "entry.987654321"
+const YES = "I'll be there", NO = "Nhi ho payega"; // must match the form's options exactly
+const PARTY = new Date("2026-11-15T18:00:00+05:30");
+
+const $ = s => document.querySelector(s), cv = $("#fx"), cx = cv.getContext("2d");
+let P = [];
+function size() { const r = devicePixelRatio || 1; cv.width = innerWidth * r; cv.height = innerHeight * r; cx.setTransform(r, 0, 0, r, 0, 0); }
+size(); addEventListener("resize", size);
+const cols = ["#e8c47b", "#f7e5b2", "#ff8fa3", "#ffb347", "#fff5e6"];
+function burst(x, y, n = 60) { for (let i = 0; i < n; i++) { const a = Math.random() * 6.283, s = 2 + Math.random() * 5; P.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, l: 1, c: cols[i % 5], r: 1.5 + Math.random() * 2 }); } }
+(function tick() { cx.clearRect(0, 0, innerWidth, innerHeight); P = P.filter(p => p.l > 0); for (const p of P) { p.x += p.vx; p.y += p.vy; p.vx *= .97; p.vy = p.vy * .97 + .07; p.l -= .014; cx.globalAlpha = Math.max(p.l, 0); cx.fillStyle = p.c; cx.beginPath(); cx.arc(p.x, p.y, p.r, 0, 6.283); cx.fill(); } requestAnimationFrame(tick); })();
+addEventListener("pointerdown", e => burst(e.clientX, e.clientY, 50));
+addEventListener("pointermove", e => { $("#glow").style.transform = `translate(${e.clientX}px,${e.clientY}px)`; });
+for (let i = 0; i < 4; i++) setTimeout(() => burst(innerWidth * (.2 + Math.random() * .6), innerHeight * (.15 + Math.random() * .3), 70), 700 + i * 450);
+setInterval(() => { if (!document.hidden) burst(innerWidth * Math.random(), innerHeight * (.1 + Math.random() * .4), 70); }, 6000);
+
+let k = 0;
+document.querySelectorAll("[data-split]").forEach(el => { el.innerHTML = [...el.textContent].map(c => `<span class="ch" style="--i:${k++}">${c}</span>`).join(""); });
+const bl = $(".bulbs");
+for (let i = 0; i < Math.round(innerWidth / 55); i++) bl.insertAdjacentHTML("beforeend", `<i style="--d:${Math.random() * 16 | 0};--t:-${(Math.random() * 3).toFixed(1)}s"></i>`);
+const t = "LESSGOO ✦ SEQUINS ✦ SAME OLD SPOT ✦ NO CANCELLING ✦ ";
+$("#mq").innerHTML = `<span>${t.repeat(4)}</span><span>${t.repeat(4)}</span>`;
+
+const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { threshold: .15 });
+document.querySelectorAll(".rv").forEach(el => io.observe(el));
+document.querySelectorAll(".tile").forEach(el => {
+  el.addEventListener("pointermove", e => { const r = el.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height; el.style.setProperty("--mx", x * 100 + "%"); el.style.setProperty("--my", y * 100 + "%"); el.style.setProperty("--rx", (.5 - y) * 10 + "deg"); el.style.setProperty("--ry", (x - .5) * 12 + "deg"); });
+  el.addEventListener("pointerleave", () => { el.style.setProperty("--rx", "0deg"); el.style.setProperty("--ry", "0deg"); });
+});
+
+function count() { let s = Math.floor((PARTY - Date.now()) / 1e3); const el = $("#count"); if (s <= 0) { el.textContent = "it’s happening"; return; } el.innerHTML = `<b>${s / 86400 | 0}</b>d <b>${s % 86400 / 3600 | 0}</b>h <b>${s % 3600 / 60 | 0}</b>m <b>${s % 60}</b>s`; }
+count(); setInterval(count, 1000);
+
+let tt; function toast(m) { const el = $("#toast"); el.textContent = m; el.classList.add("on"); clearTimeout(tt); tt = setTimeout(() => el.classList.remove("on"), 2600); }
+$("#diya").onclick = e => { const r = e.currentTarget.getBoundingClientRect(); burst(r.left + r.width / 2, r.top + 20, 120); document.body.classList.toggle("lit"); };
+$("#loc").onclick = async e => { try { await navigator.clipboard.writeText("KNG 3, 1805"); } catch {} toast("copied. no asking for the location now"); };
+
+const no = $("#no"), words = ["nope", "too slow", "nice try", "lol", "almost", "stop", "ok fine"]; let dodges = 0, ox = 0, oy = 0;
+function run(e) {
+  if (dodges >= 7) return; e.preventDefault(); dodges++;
+  const r = no.getBoundingClientRect(); let dx = (Math.random() - .5) * 320, dy = (Math.random() - .5) * 200;
+  if (r.left + dx < 10 || r.right + dx > innerWidth - 10) dx = -dx; if (r.top + dy < 80 || r.bottom + dy > innerHeight - 10) dy = -dy;
+  ox += dx; oy += dy; no.style.transform = dodges < 7 ? `translate(${ox}px,${oy}px)` : "none"; no.textContent = words[dodges - 1];
+}
+no.addEventListener("pointerenter", run); no.addEventListener("pointerdown", run);
+function send(yes) {
+  const n = $("#name"), v = n.value.trim();
+  if (!v) { n.classList.add("shake"); setTimeout(() => n.classList.remove("shake"), 400); n.focus(); return toast("name first pls"); }
+  if (yes) { const r = $(".yes").getBoundingClientRect(); for (let i = 0; i < 5; i++) setTimeout(() => burst(r.left + Math.random() * r.width, r.top, 90), i * 160); }
+  const done = () => toast(yes ? `${v}, you’re in. lessgoo` : `${v}, we’ll miss you`);
+  if (ENTRY_NAME && ENTRY_COMING) {
+    fetch(FORM_ACTION, { method: "POST", mode: "no-cors", body: new URLSearchParams({ [ENTRY_NAME]: v, [ENTRY_COMING]: yes ? YES : NO }) })
+      .then(done).catch(() => toast("didn’t go through. try again?"));
+  } else { done(); setTimeout(() => open(FORM_LINK, "_blank"), 1400); }
+}
+$("#f").onsubmit = e => { e.preventDefault(); send(true); };
+no.onclick = () => { if (dodges >= 7) send(false); };
+
+// MUSIC: a built-in instrumental loop (made in code, no copyright). To use your own track instead,
+// add the file next to index.html and set MUSIC_FILE = "music.mp3".
+const MUSIC_FILE = "";
+const mu = $("#mu"); let want = true, AC, master, au;
+const playing = () => au ? !au.paused : !!AC && AC.state === "running";
+function ui() { const on = playing(); mu.classList.toggle("on", on); mu.classList.toggle("wait", want && !on); mu.setAttribute("aria-pressed", on); }
+function synth() {
+  const spb = 60 / 104 / 2, D = 293.66, mel = [7,-1,8,7,5,-1,4,1, 0,-1,1,4,1,0,-1,-1, 4,-1,5,7,8,-1,11,12, 11,8,7,5,4,1,0,-1];
+  const nb = AC.createBuffer(1, AC.sampleRate, AC.sampleRate), d = nb.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  const env = (g, t, a, pk, dec) => { g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(pk, t + a); g.gain.exponentialRampToValueAtTime(.0001, t + a + dec); };
+  const osc = (type, f, t, len, g) => { const o = AC.createOscillator(); o.type = type; o.frequency.setValueAtTime(f, t); o.connect(g); o.start(t); o.stop(t + len); return o; };
+  const gain = (dest) => { const g = AC.createGain(); g.connect(dest || master); return g; };
+  const noise = (t, f, type, pk, dec) => { const s = AC.createBufferSource(), fl = AC.createBiquadFilter(), g = gain(); s.buffer = nb; fl.type = type; fl.frequency.value = f; env(g, t, .003, pk, dec); s.connect(fl); fl.connect(g); s.start(t); s.stop(t + dec + .05); };
+  const dhumm = (t, v) => { const g = gain(), o = osc("sine", 170, t, .35, g); o.frequency.exponentialRampToValueAtTime(55, t + .12); env(g, t, .005, v, .28); };
+  const pluck = (t, f, v) => { const g = gain(), fl = AC.createBiquadFilter(); fl.type = "lowpass"; fl.frequency.setValueAtTime(4200, t); fl.frequency.exponentialRampToValueAtTime(700, t + .5); fl.connect(g); env(g, t, .006, v, .7); osc("sawtooth", f, t, .8, fl); osc("triangle", f * 2.005, t, .8, fl); };
+  const bell = t => [1174.7, 1760].forEach((f, i) => { const g = gain(); env(g, t, .004, .05 / (i + 1), 1.6); osc("sine", f, t, 1.7, g); });
+  [D / 2, D * .75].forEach(f => { const g = gain(); g.gain.value = .05; osc("triangle", f, AC.currentTime, 1e5, g); });
+  let n = 0, next = AC.currentTime + .1;
+  setInterval(() => { while (next < AC.currentTime + .2) {
+    const s = n % 8, t = next;
+    if (s === 0 || s === 3 || s === 4) dhumm(t, s === 3 ? .35 : .7);
+    if (s === 2 || s === 6 || s === 7) noise(t, 2500, "bandpass", s === 7 ? .15 : .3, .07);
+    noise(t, 8000, "highpass", .05, .04);
+    const m = mel[n % 32]; if (m >= 0) pluck(t, D * 2 ** (m / 12), .16);
+    if (n % 16 === 0) bell(t);
+    n++; next += spb;
+  } }, 40);
+}
+function play() {
+  if (!au && !AC) {
+    if (MUSIC_FILE) { au = new Audio(MUSIC_FILE); au.loop = true; au.volume = .6; au.onplay = au.onpause = ui; }
+    else { AC = new (window.AudioContext || window.webkitAudioContext)(); master = AC.createGain(); master.gain.value = .5; master.connect(AC.destination); AC.onstatechange = ui; synth(); }
+  }
+  Promise.resolve(au ? au.play() : AC.resume()).then(ui).catch(ui);
+}
+function halt() { if (au) au.pause(); else if (AC) AC.suspend(); ui(); }
+mu.onclick = () => { if (playing()) { want = false; halt(); } else { want = true; play(); } };
+["pointerdown", "keydown", "touchend"].forEach(ev => addEventListener(ev, e => { if (want && !playing() && !(e.target.closest && e.target.closest("#mu"))) play(); }, { passive: true }));
+document.addEventListener("visibilitychange", () => { if (document.hidden) { if (playing()) halt(); } else if (want) play(); });
+ui(); play();
